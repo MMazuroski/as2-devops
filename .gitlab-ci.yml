@@ -1,15 +1,17 @@
 image: node:18.17.1
 
 stages:
-- build
-- test
-- deploy
+  - build
+  - test
+  - deploy
 
 build:
   image: docker:latest
   stage: build
 
   script:
+    - echo $CI_REGISTRY_IMAGE
+    - echo $CI_COMMIT_REF_SLUG
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
@@ -24,5 +26,3 @@ deploy:
   stage: deploy
   script:
     - echo "Deploying to production server"
-
-

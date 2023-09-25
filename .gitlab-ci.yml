@@ -8,19 +8,27 @@ stages:
 build:
   image: docker:latest
   stage: build
+  services:
+    - docker:dind
 
   script:
     - echo $CI_REGISTRY_IMAGE
     - echo $CI_COMMIT_REF_SLUG
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
-test:
+semgrep:
   stage: test
-  script:
-    - npm install eslint
-    - node_modules/eslint/bin/eslint.js .
+  image: returntocorp/semgrep
+  script: semgrep ci
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "web"  # allow triggering a scan manually from the gitlab UI
+  - if: $CI_MERGE_REQUEST_IID
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    
+    SEMGREP_APP_TOKEN: $SEMGREP_APP_TOKEN
 
 deploy:
   stage: deploy
